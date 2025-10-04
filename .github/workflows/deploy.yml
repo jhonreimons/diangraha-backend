@@ -35,10 +35,21 @@ jobs:
           docker compose up -d
           
           # Wait for containers to start
-          sleep 15
+          sleep 30
           
-          # Check if app is running
+          # Check container status
+          echo "=== Container Status ==="
           docker compose ps
+          
+          # Check app logs
+          echo "=== App Logs ==="
+          docker compose logs app --tail=50
+          
+          # Check if app is responding
+          echo "=== Health Check ==="
+          sleep 10
+          curl -f http://localhost:8080/swagger-ui.html || echo "Swagger not ready yet"
+          curl -f http://localhost:8080/api/brands || echo "API not ready yet"
           
           # Cleanup unused images
           docker image prune -f
