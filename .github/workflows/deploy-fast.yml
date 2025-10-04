@@ -1,4 +1,4 @@
-name: Build on Server Deploy
+name: Fast Deploy to Server
 
 on:
   push:
@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - uses: actions/checkout@v4
+    
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -30,15 +32,9 @@ jobs:
             cd diangraha-backend
           fi
           
-          # Build and start containers
+          # Build and deploy
           docker compose build --no-cache
           docker compose up -d
           
-          # Wait for containers to start
-          sleep 15
-          
-          # Check if app is running
-          docker compose ps
-          
-          # Cleanup unused images
+          # Cleanup
           docker image prune -f

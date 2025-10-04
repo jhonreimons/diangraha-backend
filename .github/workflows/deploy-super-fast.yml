@@ -1,0 +1,79 @@
+name: Super Fast Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+    
+    - name: Build JAR
+      run: mvn clean package -DskipTests
+    
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          # Stop existing app
+          pkill -f "diangraha-backend" || true
+          
+          # Create directories
+          mkdir -p /var/diangraha/{app,uploads}
+          
+          # Setup MySQL if not exists
+          if ! docker ps | grep -q diangraha-mysql; then
+            docker run -d --name diangraha-mysql \
+              -e MYSQL_ROOT_PASSWORD=jhonreimon123 \
+              -e MYSQL_DATABASE=diangraha_dev \
+              -e MYSQL_USER=dev \
+              -e MYSQL_PASSWORD=dev \
+              -p 3306:3306 \
+              -v mysql_data:/var/lib/mysql \
+              --restart unless-stopped \
+              mysql:8.0
+            sleep 30
+          fi
+    
+    - name: Copy JAR to server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        source: "target/diangraha-backend-0.0.1-SNAPSHOT.jar"
+        target: "/var/diangraha/app/"
+        strip_components: 1
+    
+    - name: Start application
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          cd /var/diangraha/app
+          
+          # Start app in background
+          nohup java -jar \
+            -Dspring.datasource.url=jdbc:mysql://localhost:3306/diangraha_dev \
+            -Dspring.datasource.username=root \
+            -Dspring.datasource.password=jhonreimon123 \
+            -Dapp.jwt.secret=mySecretKey123456789012345678901234567890 \
+            diangraha-backend-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+          
+          # Wait and check if started
+          sleep 10
+          curl -f http://localhost:8080/actuator/health || echo "App starting..."
