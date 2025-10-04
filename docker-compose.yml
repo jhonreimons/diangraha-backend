@@ -14,6 +14,10 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./db-schema-diangraha.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
     restart: unless-stopped
     networks:
       - diangraha-network
@@ -22,7 +26,8 @@ services:
     build: .
     container_name: diangraha-backend
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/diangraha_dev
       SPRING_DATASOURCE_USERNAME: root
