@@ -48,11 +48,8 @@ jobs:
             echo "✅ Old containers stopped"
 
             echo "=== STAGE 3: Build JAR Application ==="
-            # Simple cleanup
-            rm -rf target/ || true
-            
-            # Build JAR
-            ./mvnw clean package -DskipTests
+            # Skip clean, langsung compile dan overwrite JAR
+            ./mvnw compile package -DskipTests -Dmaven.clean.skip=true
             if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
                 echo "❌ ERROR: JAR file not found!"
                 exit 1
