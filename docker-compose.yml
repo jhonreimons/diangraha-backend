@@ -1,58 +1,31 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: diangraha-mysql
+    container_name: mysql8
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: jhonreimon123
-      MYSQL_DATABASE: diangraha_dev
-      MYSQL_USER: dev
-      MYSQL_PASSWORD: dev
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./db-schema-diangraha.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pjhonreimon123"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    restart: unless-stopped
-    networks:
-      - diangraha-network
+      - ./db-schema-diangraha.sql:/docker-entrypoint-initdb.d/db-schema-diangraha.sql:ro
 
   app:
-    build: .
-    container_name: diangraha-backend
-    depends_on:
-      mysql:
-        condition: service_healthy
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/diangraha_dev
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: jhonreimon123
-      JWT_SECRET: mySecretKey123456789012345678901234567890
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: true
-      LOGGING_LEVEL_ROOT: INFO
+    image: diangraha-app:latest
+    container_name: diangraha-app
+    restart: always
     ports:
       - "8080:8080"
-    volumes:
-      - ./uploads:/app/uploads
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/brands"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    networks:
-      - diangraha-network
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
 
 volumes:
   mysql_data:
-
-networks:
-  diangraha-network:
-    driver: bridge

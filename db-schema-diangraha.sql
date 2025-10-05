@@ -1,3 +1,4 @@
+DROP DATABASE IF EXISTS diangraha_dev;
 
 CREATE DATABASE diangraha_dev;
 
@@ -10,14 +11,14 @@ CREATE TABLE users (
 );
 
 -- Table Brand
-CREATE TABLE brand (
+CREATE TABLE brands (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     logo_url TEXT
 );
 
 -- Table Service
-CREATE TABLE service (
+CREATE TABLE services (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
     short_desc TEXT,
@@ -31,18 +32,21 @@ CREATE TABLE service_feature (
     service_id BIGINT NOT NULL,
     feature_name VARCHAR(255) NOT NULL,
     feature_desc TEXT,
-    FOREIGN KEY (service_id) REFERENCES service(id) ON DELETE CASCADE
+    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
 );
 
 -- Table Contact Message
-CREATE TABLE contact_message (
+CREATE TABLE contact_messages (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
+    full_name VARCHAR(255) NOT NULL,          -- selalu ada
+    email VARCHAR(255) NOT NULL,              -- selalu ada
+    phone_number VARCHAR(50) NULL,            -- opsional
+    company_name VARCHAR(255) NULL,           -- opsional (hanya form pertama)
+    interested_in VARCHAR(255) NULL,          -- opsional (hanya form kedua)
+    message TEXT NULL,                        -- opsional, bisa kosong
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default user
-INSERT INTO users (username, password) VALUES 
-('dev', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi2');
+SELECT * FROM contact_messages;
+SHOW TABLES;
+

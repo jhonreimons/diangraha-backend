@@ -1,19 +1,14 @@
-FROM maven:3.9.4-openjdk-21-slim AS build
-
-WORKDIR /app
-
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-COPY src ./src
-RUN mvn clean package -DskipTests
-
+# Gunakan OpenJDK 21 resmi
 FROM openjdk:21-jdk-slim
 
+# Set direktori kerja
 WORKDIR /app
 
-COPY --from=build /app/target/diangraha-backend-0.0.1-SNAPSHOT.jar app.jar
+# Copy file JAR hasil build
+COPY target/diangraha-backend-0.0.1-SNAPSHOT.jar app.jar
 
+# Expose port aplikasi
 EXPOSE 8080
 
+# Jalankan aplikasi
 ENTRYPOINT ["java", "-jar", "app.jar"]
