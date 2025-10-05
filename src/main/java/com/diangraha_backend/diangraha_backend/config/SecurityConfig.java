@@ -49,10 +49,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         
                         /* ==== PUBLIC ENDPOINTS ==== */
-                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
                         .requestMatchers("/api/contact-messages/**").permitAll()
                         .requestMatchers("/api/brands/**").permitAll()
                         .requestMatchers("/api/services/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
                         
                         /* ==== AUTHENTICATED ENDPOINTS ==== */
                         .anyRequest().authenticated()
