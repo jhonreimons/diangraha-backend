@@ -30,26 +30,51 @@ jobs:
             cd diangraha-backend
           fi
           
-          # Build and start containers
+          # Stop and remove old containers
+          echo "=== Stopping old containers ==="
+          docker compose down -v || true
+          docker system prune -f || true
+          
+          # Build containers
+          echo "=== Building containers ==="
           docker compose build --no-cache
-          docker compose up -d
           
-          # Wait for containers to start
-          sleep 30
+          # Start MySQL first
+          echo "=== Starting MySQL ==="
+          docker compose up -d mysql
           
-          # Check container status
-          echo "=== Container Status ==="
+          # Wait for MySQL to be ready
+          echo "=== Waiting for MySQL ==="
+          for i in {1..60}; do
+            if docker compose exec mysql mysqladmin ping -h localhost --silent; then
+              echo "MySQL is ready!"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/60)"
+            sleep 2
+          done
+          
+          # Start app
+          echo "=== Starting App ==="
+          docker compose up -d app
+          
+          # Monitor app startup
+          echo "=== Monitoring App Startup ==="
+          for i in {1..30}; do
+            if curl -s http://localhost:8080/api/brands > /dev/null 2>&1; then
+              echo "App is ready!"
+              break
+            fi
+            echo "Waiting for app... ($i/30)"
+            docker compose logs app --tail=5
+            sleep 3
+          done
+          
+          # Final status
+          echo "=== Final Status ==="
           docker compose ps
-          
-          # Check app logs
-          echo "=== App Logs ==="
-          docker compose logs app --tail=50
-          
-          # Check if app is responding
-          echo "=== Health Check ==="
-          sleep 10
-          curl -f http://localhost:8080/swagger-ui.html || echo "Swagger not ready yet"
-          curl -f http://localhost:8080/api/brands || echo "API not ready yet"
-          
-          # Cleanup unused images
-          docker image prune -f
+          echo "=== App Logs (last 20 lines) ==="
+          docker compose logs app --tail=20
+          echo "=== Testing endpoints ==="
+          curl -I http://localhost:8080/swagger-ui/index.html || echo "Swagger not accessible"
+          curl -I http://localhost:8080/api/brands || echo "API not accessible"
