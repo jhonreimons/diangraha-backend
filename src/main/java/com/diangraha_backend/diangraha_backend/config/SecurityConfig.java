@@ -53,6 +53,7 @@ public class SecurityConfig {
                         /* ==== PUBLIC ACCESS ==== */
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()
                         .requestMatchers("/api/contact-messages/**").permitAll()
+                        .requestMatchers("/api/brands/**").permitAll() // Temporary for testing
 
                         /* ==== LAINNYA WAJIB AUTH ==== */
                         .anyRequest().authenticated()
