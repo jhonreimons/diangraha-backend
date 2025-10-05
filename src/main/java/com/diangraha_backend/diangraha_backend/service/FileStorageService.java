@@ -19,10 +19,15 @@ public class FileStorageService {
             Files.createDirectories(dirPath);
         }
 
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+        // Clean filename - remove spaces and special characters
+        String originalName = file.getOriginalFilename();
+        String cleanName = originalName.replaceAll("[^a-zA-Z0-9.-]", "_");
+        String fileName = System.currentTimeMillis() + "_" + cleanName;
+        
         Path filePath = dirPath.resolve(fileName);
         Files.copy(file.getInputStream(), filePath);
 
-        return "/uploads/" + subFolder + "/" + fileName;
+        // Return full URL with port 8080 for proper access
+        return "http://103.103.20.23:8080/uploads/" + subFolder + "/" + fileName;
     }
 }
