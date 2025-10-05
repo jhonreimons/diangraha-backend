@@ -14,15 +14,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "Unique identifier for user", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Unique identifier for user", example = "1")
     private Long id;
 
     @Column(unique = true, nullable = false)
-    @Schema(description = "Unique username for user login", example = "john_doe", required = true, maxLength = 50)
+    @Schema(description = "Unique username for user login", example = "john_doe", requiredMode = Schema.RequiredMode.REQUIRED, maxLength = 50)
     private String username;
 
     @Column(nullable = false)
-    @Schema(description = "User password (hashed)", example = "$2a$10$...", required = true, minLength = 8, accessMode = Schema.AccessMode.WRITE_ONLY)
+    @Schema(description = "User password (hashed)", example = "$2a$10$...", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 
 }

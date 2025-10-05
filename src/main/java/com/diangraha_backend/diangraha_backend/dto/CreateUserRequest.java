@@ -11,11 +11,11 @@ public class CreateUserRequest {
     
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    @Schema(description = "Username for the new user", example = "john_doe", required = true, minLength = 3, maxLength = 50)
+    @Schema(description = "Username for the new user", example = "john_doe", requiredMode = Schema.RequiredMode.REQUIRED)
     private String username;
     
     @NotBlank(message = "Password is required")
     @Size(min = 8, message = "Password must be at least 8 characters")
-    @Schema(description = "Password for the new user", example = "mySecurePassword123", required = true, minLength = 8, format = "password")
+    @Schema(description = "Password for the new user", example = "mySecurePassword123", requiredMode = Schema.RequiredMode.REQUIRED, format = "password")
     private String password;
 }
