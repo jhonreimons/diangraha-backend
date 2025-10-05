@@ -84,7 +84,7 @@ public class SecurityConfig {
         cfg.addAllowedMethod("*"); // Allow all methods
         cfg.addAllowedHeader("*"); // Allow all headers
         cfg.setExposedHeaders(List.of("Authorization","Content-Disposition"));
-        cfg.setAllowCredentials(true); // Allow credentials
+        cfg.setAllowCredentials(false); // Disable credentials for wildcard origins
         cfg.setMaxAge(3600L); // Cache preflight for 1 hour
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
