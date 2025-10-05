@@ -59,13 +59,21 @@ jobs:
             echo "Cek Java..."
             if ! command -v java &> /dev/null; then
                 echo "Java tidak ditemukan, gunakan Docker untuk build..."
-                # Build menggunakan Maven Docker image
-                docker run --rm -v "$PWD":/usr/src/app -w /usr/src/app maven:3.9.4-openjdk-21-slim mvn clean package -DskipTests
+                # Build menggunakan Maven Docker image yang benar
+                docker run --rm -v "$PWD":/usr/src/app -w /usr/src/app maven:3.9-openjdk-21 mvn clean package -DskipTests
             else
                 echo "Java ditemukan, build dengan mvnw..."
                 export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
                 export PATH=$JAVA_HOME/bin:$PATH
                 ./mvnw clean package -DskipTests
+            fi
+            
+            echo "Cek JAR file..."
+            if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
+                echo "ERROR: JAR file tidak ditemukan! Build gagal."
+                exit 1
+            else
+                echo "JAR file berhasil dibuat: $(ls -la target/*.jar)"
             fi
 
             echo "Jalankan docker compose..."
