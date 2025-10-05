@@ -52,6 +52,7 @@ public class SecurityConfig {
 
                         /* ==== PUBLIC ACCESS ==== */
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight
                         .requestMatchers("/api/contact-messages/**").permitAll()
                         .requestMatchers("/api/brands/**").permitAll() // Temporary for testing
 
@@ -79,9 +80,9 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of("*")); // Allow all origins
-        cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-        cfg.setAllowedHeaders(List.of("*"));
+        cfg.addAllowedOriginPattern("*"); // Allow all origins
+        cfg.addAllowedMethod("*"); // Allow all methods
+        cfg.addAllowedHeader("*"); // Allow all headers
         cfg.setExposedHeaders(List.of("Authorization","Content-Disposition"));
         cfg.setAllowCredentials(true); // Allow credentials
         cfg.setMaxAge(3600L); // Cache preflight for 1 hour

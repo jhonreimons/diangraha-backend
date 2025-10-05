@@ -48,8 +48,16 @@ jobs:
             echo "✅ Old containers stopped"
 
             echo "=== STAGE 3: Build JAR Application ==="
-            # Skip clean, langsung compile dan overwrite JAR
-            ./mvnw compile package -DskipTests -Dmaven.clean.skip=true
+            # Fix permissions on target directory
+            chmod -R 755 target/ || true
+            
+            # Try simple package first (overwrite existing)
+            ./mvnw package -DskipTests || {
+                echo "Package failed, trying with permission fix..."
+                sudo chown -R $(whoami):$(whoami) target/ || true
+                chmod -R 755 target/ || true
+                ./mvnw package -DskipTests
+            }
             if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
                 echo "❌ ERROR: JAR file not found!"
                 exit 1
