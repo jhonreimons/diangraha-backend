@@ -60,7 +60,7 @@ jobs:
             if ! command -v java &> /dev/null; then
                 echo "Java tidak ditemukan, gunakan Docker untuk build..."
                 # Build menggunakan Maven Docker image yang benar
-                docker run --rm -v "$PWD":/usr/src/app -w /usr/src/app maven:3.9-openjdk-21 mvn clean package -DskipTests
+                docker run --rm -v "$PWD":/usr/src/app -w /usr/src/app maven:3.9.4-eclipse-temurin-21 mvn clean package -DskipTests
             else
                 echo "Java ditemukan, build dengan mvnw..."
                 export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
