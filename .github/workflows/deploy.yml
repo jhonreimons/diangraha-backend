@@ -57,8 +57,10 @@ jobs:
             echo "✅ Old containers stopped"
 
             echo "=== STAGE 4: Build JAR Application ==="
-            # Fresh build in clean directory
-            ./mvnw clean package -DskipTests
+            # Force clean build with cache clear
+            rm -rf target/ || true
+            rm -rf ~/.m2/repository/com/diangraha-backend || true
+            ./mvnw clean package -DskipTests -U
             if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
                 echo "❌ ERROR: JAR file not found!"
                 exit 1
@@ -101,7 +103,9 @@ jobs:
             fi
 
             echo "=== STAGE 7: Build Application Container ==="
-            docker compose build app --no-cache
+            # Remove old images and build fresh
+            docker rmi diangraha-backend-app || true
+            docker compose build app --no-cache --pull
             echo "✅ Application container built"
 
             echo "=== STAGE 8: Deploy Application Container ==="
