@@ -36,27 +36,25 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .authorizeHttpRequests(auth -> auth
-                        /* ==== SWAGGER (wajib permitAll) ==== */
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/v3/api-docs/**",
-                                "/api-docs/**"
-                        ).permitAll()
-
-                        /* ==== STATIC/UPLOADS (akses gambar) ==== */
-                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
-
-                        /* ==== AUTH (register/login) ==== */
-                        .requestMatchers("/api/auth/**").permitAll()
-
-                        /* ==== PUBLIC ACCESS ==== */
+                        /* ==== AUTH ENDPOINTS (MUST BE FIRST) ==== */
+                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        
+                        /* ==== SWAGGER ==== */
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**").permitAll()
+                        
+                        /* ==== STATIC FILES ==== */
+                        .requestMatchers("/uploads/**").permitAll()
+                        
+                        /* ==== CORS PREFLIGHT ==== */
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        
+                        /* ==== PUBLIC ENDPOINTS ==== */
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // CORS preflight
                         .requestMatchers("/api/contact-messages/**").permitAll()
-                        .requestMatchers("/api/brands/**").permitAll() // Temporary for testing
-
-                        /* ==== LAINNYA WAJIB AUTH ==== */
+                        .requestMatchers("/api/brands/**").permitAll()
+                        .requestMatchers("/api/services/**").permitAll()
+                        
+                        /* ==== AUTHENTICATED ENDPOINTS ==== */
                         .anyRequest().authenticated()
                 )
 
