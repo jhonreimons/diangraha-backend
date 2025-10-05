@@ -48,18 +48,11 @@ jobs:
             echo "✅ Old containers stopped"
 
             echo "=== STAGE 3: Build JAR Application ==="
-            # Kill any Java processes that might lock files
-            pkill -f "diangraha-backend" || true
-            sleep 2
+            # Simple cleanup
+            rm -rf target/ || true
             
-            # Force cleanup with sudo if needed
-            sudo rm -rf target/ || rm -rf target/ || true
-            
-            # Try compile without clean first
-            ./mvnw compile package -DskipTests || {
-                echo "Compile failed, trying with clean..."
-                ./mvnw clean package -DskipTests
-            }
+            # Build JAR
+            ./mvnw clean package -DskipTests
             if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
                 echo "❌ ERROR: JAR file not found!"
                 exit 1
