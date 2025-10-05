@@ -2,7 +2,11 @@ package com.diangraha_backend.diangraha_backend.controller;
 
 import com.diangraha_backend.diangraha_backend.dto.*;
 import com.diangraha_backend.diangraha_backend.service.ServiceService;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,8 +16,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/services")
-
-
 public class ServiceController {
 
     private final ServiceService serviceService;
@@ -22,12 +24,13 @@ public class ServiceController {
         this.serviceService = serviceService;
     }
 
-    @PostMapping(consumes = {"multipart/form-data"})
+    @Operation(summary = "Create new service with image upload")
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServiceResponse> createService(
-            @RequestParam("name") String name,
-            @RequestParam("shortDesc") String shortDesc,
-            @RequestParam("longDesc") String longDesc,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
+            @Parameter(description = "Service name") @RequestParam("name") String name,
+            @Parameter(description = "Short description") @RequestParam("shortDesc") String shortDesc,
+            @Parameter(description = "Long description") @RequestParam("longDesc") String longDesc,
+            @Parameter(description = "Service image file") @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
         ServiceRequest request = new ServiceRequest(name, shortDesc, longDesc, imageFile);
         return ResponseEntity.ok(serviceService.createService(request));
@@ -54,13 +57,14 @@ public class ServiceController {
     }
 
 
-    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    @Operation(summary = "Update service with optional image upload")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServiceResponse> updateService(
-            @PathVariable Long id,
-            @RequestParam("name") String name,
-            @RequestParam("shortDesc") String shortDesc,
-            @RequestParam("longDesc") String longDesc,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
+            @Parameter(description = "Service ID") @PathVariable Long id,
+            @Parameter(description = "Service name") @RequestParam("name") String name,
+            @Parameter(description = "Short description") @RequestParam("shortDesc") String shortDesc,
+            @Parameter(description = "Long description") @RequestParam("longDesc") String longDesc,
+            @Parameter(description = "Service image file (optional)") @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
         ServiceRequest request = new ServiceRequest(name, shortDesc, longDesc, imageFile);
         return ResponseEntity.ok(serviceService.updateService(id, request));
