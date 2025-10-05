@@ -74,16 +74,17 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    /* CORS untuk semua origin */
+    /* CORS untuk semua origin termasuk Postman */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.addAllowedOriginPattern("*"); // Allow all origins
-        cfg.addAllowedMethod("*"); // Allow all methods
-        cfg.addAllowedHeader("*"); // Allow all headers
-        cfg.setExposedHeaders(List.of("Authorization","Content-Disposition"));
-        cfg.setAllowCredentials(false); // Disable credentials for wildcard origins
-        cfg.setMaxAge(3600L); // Cache preflight for 1 hour
+        cfg.setAllowedOriginPatterns(List.of("*")); // Allow all origins
+        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        cfg.setAllowedHeaders(List.of("*")); // Allow all headers
+        cfg.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
+        cfg.setAllowCredentials(false); // Must be false for wildcard origins
+        cfg.setMaxAge(3600L);
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
