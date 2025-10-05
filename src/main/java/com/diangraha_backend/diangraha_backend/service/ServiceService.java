@@ -99,6 +99,27 @@ public class ServiceService {
         serviceRepository.deleteById(id);
     }
 
+    // UPDATE Feature
+    public ServiceFeatureResponse updateFeature(Long serviceId, Long featureId, ServiceFeatureRequest request) {
+        ServiceFeature feature = featureRepository.findById(featureId)
+                .orElseThrow(() -> new RuntimeException("Feature not found"));
+        
+        if (!feature.getService().getId().equals(serviceId)) {
+            throw new RuntimeException("Feature does not belong to this service");
+        }
+        
+        feature.setFeatureName(request.getFeatureName());
+        feature.setFeatureDesc(request.getFeatureDesc());
+        
+        ServiceFeature updated = featureRepository.save(feature);
+        
+        return new ServiceFeatureResponse(
+                updated.getId(),
+                updated.getFeatureName(),
+                updated.getFeatureDesc()
+        );
+    }
+
     // DELETE Feature
     public void deleteFeature(Long serviceId, Long featureId) {
         ServiceFeature feature = featureRepository.findById(featureId)
