@@ -52,27 +52,21 @@ jobs:
             
             # Remove app image jika ada
             docker rmi diangraha-backend-app || true
-            docker rmi $(docker images -q diangraha-backend-app) || true
-
-            echo "Cek Java 21..."
-            if ! command -v java &> /dev/null || ! java -version 2>&1 | grep -q "21"; then
-                echo "Install Java 21..."
-                sudo apt-get update -y
-                sudo apt-get install -y openjdk-21-jdk maven
-                
-                # Set JAVA_HOME untuk session ini
-                export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
-                export PATH=$JAVA_HOME/bin:$PATH
-                
-                echo "Java version: $(java -version)"
-            else
-                echo "Java 21 sudah terinstall"
-                export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
-                export PATH=$JAVA_HOME/bin:$PATH
+            if [ "$(docker images -q diangraha-backend-app 2> /dev/null)" != "" ]; then
+                docker rmi $(docker images -q diangraha-backend-app) || true
             fi
 
-            echo "Build project Spring Boot..."
-            ./mvnw clean package -DskipTests
+            echo "Cek Java..."
+            if ! command -v java &> /dev/null; then
+                echo "Java tidak ditemukan, gunakan Docker untuk build..."
+                # Build menggunakan Maven Docker image
+                docker run --rm -v "$PWD":/usr/src/app -w /usr/src/app maven:3.9.4-openjdk-21-slim mvn clean package -DskipTests
+            else
+                echo "Java ditemukan, build dengan mvnw..."
+                export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+                export PATH=$JAVA_HOME/bin:$PATH
+                ./mvnw clean package -DskipTests
+            fi
 
             echo "Jalankan docker compose..."
             docker compose up -d --build
