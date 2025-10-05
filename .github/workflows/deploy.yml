@@ -24,11 +24,20 @@ jobs:
             echo "=== STAGE 1: Git Pull Latest Code ==="
             cd /srv/myapp
             
-            # Remove old directory and clone fresh
-            rm -rf diangraha-backend || true
-            git clone https://github.com/jhonreimons/diangraha-backend.git
-            cd diangraha-backend
-            echo "✅ Fresh code pulled"
+            # Check if directory exists, pull or clone accordingly
+            if [ -d "diangraha-backend" ]; then
+                echo "Directory exists, pulling latest changes..."
+                cd diangraha-backend
+                git fetch origin
+                git reset --hard origin/main
+                git clean -fd
+                echo "✅ Latest code pulled"
+            else
+                echo "Directory not found, cloning repository..."
+                git clone https://github.com/jhonreimons/diangraha-backend.git
+                cd diangraha-backend
+                echo "✅ Fresh code cloned"
+            fi
 
             echo "=== STAGE 2: Create Environment Config ==="
             cat > .env <<EOL
