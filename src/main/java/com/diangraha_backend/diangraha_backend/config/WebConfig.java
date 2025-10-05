@@ -12,11 +12,13 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // pastikan folder uploads berada di root project (atau sesuaikan)
-        Path uploadDir = Paths.get("uploads");
-        String location = uploadDir.toFile().getAbsolutePath() + "/";
-
+        // Get absolute path for uploads directory
+        Path uploadDir = Paths.get("uploads").toAbsolutePath();
+        String location = "file:" + uploadDir.toString() + "/";
+        
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + location);
+                .addResourceLocations(location)
+                .setCachePeriod(3600)
+                .resourceChain(true);
     }
 }
