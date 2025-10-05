@@ -1,19 +1,19 @@
-name: CI/CD Deploy Spring Boot to VPS
+name: Deploy Spring Boot with Docker
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main   # jalankan saat push ke branch main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout source code
         uses: actions/checkout@v3
 
-      # Kirim source code ke VPS
-      - name: Copy project to VPS
+      - name: Copy source code to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -22,8 +22,7 @@ jobs:
           source: "."
           target: "~/diangraha-backend"
 
-      # SSH ke server dan build + deploy
-      - name: Deploy on VPS
+      - name: Build & Deploy on server
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -32,11 +31,22 @@ jobs:
           script: |
             cd ~/diangraha-backend
 
-            # Build JAR
-            ./mvnw clean package -DskipTests || mvn clean package -DskipTests
-  
-            # Jalankan Docker Compose
-            docker-compose up -d --build
+            echo "Membuat file .env di server..."
+            cat > .env <<EOL
+            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            MYSQL_USER=${{ secrets.MYSQL_USER }}
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
+            SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
+            SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+            EOL
 
-            # (Opsional) Hapus source code biar ringan
-            rm -rf ~/diangraha-backend
+            echo "Stop container lama (kalau ada)..."
+            docker compose down || true
+
+            echo "Build project Spring Boot..."
+            ./mvnw clean package -DskipTests
+
+            echo Jalankan docker compose..."
+            docker compose up -d --build

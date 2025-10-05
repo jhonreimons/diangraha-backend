@@ -12,13 +12,11 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    @Value("${app.jwt.secret}")
-    private String SECRET;
-
     private final long EXPIRATION = 1000 * 60 * 60; // 1 jam
+    private final Key signingKey = Keys.secretKeyFor(SignatureAlgorithm.HS256); // Auto-generate secure key
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes());
+        return signingKey;
     }
 
     // Generate token dari username
