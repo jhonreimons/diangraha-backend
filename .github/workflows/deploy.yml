@@ -96,8 +96,17 @@ jobs:
             echo "✅ Application container built"
 
             echo "=== STAGE 7: Deploy Application Container ==="
+            echo "Debug: Checking .env file..."
+            cat .env
+            
+            echo "Debug: Testing environment variables..."
+            docker compose config
+            
             docker compose up -d app
             echo "✅ Application container deployed"
+            
+            echo "Debug: Checking container environment..."
+            docker exec diangraha-backend env | grep SPRING || echo "No SPRING env vars found"
 
             echo "=== STAGE 8: Monitor Deployment ==="
             echo "Waiting for application to start..."
