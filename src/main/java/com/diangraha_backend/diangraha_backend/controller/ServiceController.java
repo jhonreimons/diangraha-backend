@@ -73,6 +73,15 @@ public class ServiceController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{serviceId}/features/{featureId}")
+    public ResponseEntity<ServiceFeatureResponse> updateFeature(
+            @PathVariable Long serviceId,
+            @PathVariable Long featureId,
+            @RequestBody ServiceFeatureRequest request
+    ) {
+        return ResponseEntity.ok(serviceService.updateFeature(serviceId, featureId, request));
+    }
+
     @DeleteMapping("/{serviceId}/features/{featureId}")
     public ResponseEntity<Void> deleteFeature(
             @PathVariable Long serviceId,
