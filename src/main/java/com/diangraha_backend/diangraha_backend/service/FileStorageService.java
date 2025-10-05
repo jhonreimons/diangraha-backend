@@ -19,11 +19,7 @@ public class FileStorageService {
             Files.createDirectories(dirPath);
         }
 
-        // Clean filename - remove spaces and special characters
-        String originalName = file.getOriginalFilename();
-        String cleanName = originalName.replaceAll("[^a-zA-Z0-9.-]", "_");
-        String fileName = System.currentTimeMillis() + "_" + cleanName;
-        
+        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
         Path filePath = dirPath.resolve(fileName);
         Files.copy(file.getInputStream(), filePath);
 
