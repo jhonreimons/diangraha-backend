@@ -25,6 +25,12 @@ public class SwaggerConfig {
                                 .email("support@diangraha.com")))
                 .servers(List.of(
                         new Server()
+                                .url("http://103.103.20.23:8080")
+                                .description("Production Server"),
+                        new Server()
+                                .url("http://localhost:8080")
+                                .description("Local Server"),
+                        new Server()
                                 .url("/")
                                 .description("Current Server")
                 ));
