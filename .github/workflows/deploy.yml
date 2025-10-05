@@ -1,80 +1,42 @@
-name: Build on Server Deploy
+name: CI/CD Deploy Spring Boot to VPS
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Deploy to server
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
-        key: ${{ secrets.SERVER_SSH_KEY }}
-        script: |
-          cd /var/diangraha
-          
-          # Stop existing containers
-          docker compose down || true
-          
-          # Clone/pull latest code
-          if [ -d "diangraha-backend" ]; then
-            cd diangraha-backend
-            git pull origin main
-          else
-            git clone https://github.com/jhonreimons/diangraha-backend.git
-            cd diangraha-backend
-          fi
-          
-          # Stop and remove old containers
-          echo "=== Stopping old containers ==="
-          docker compose down -v || true
-          docker system prune -f || true
-          
-          # Build containers
-          echo "=== Building containers ==="
-          docker compose build --no-cache
-          
-          # Start MySQL first
-          echo "=== Starting MySQL ==="
-          docker compose up -d mysql
-          
-          # Wait for MySQL to be ready
-          echo "=== Waiting for MySQL ==="
-          for i in {1..60}; do
-            if docker compose exec mysql mysqladmin ping -h localhost --silent; then
-              echo "MySQL is ready!"
-              break
-            fi
-            echo "Waiting for MySQL... ($i/60)"
-            sleep 2
-          done
-          
-          # Start app
-          echo "=== Starting App ==="
-          docker compose up -d app
-          
-          # Monitor app startup
-          echo "=== Monitoring App Startup ==="
-          for i in {1..30}; do
-            if curl -s http://localhost:8080/api/brands > /dev/null 2>&1; then
-              echo "App is ready!"
-              break
-            fi
-            echo "Waiting for app... ($i/30)"
-            docker compose logs app --tail=5
-            sleep 3
-          done
-          
-          # Final status
-          echo "=== Final Status ==="
-          docker compose ps
-          echo "=== App Logs (last 20 lines) ==="
-          docker compose logs app --tail=20
-          echo "=== Testing endpoints ==="
-          curl -I http://localhost:8080/swagger-ui/index.html || echo "Swagger not accessible"
-          curl -I http://localhost:8080/api/brands || echo "API not accessible"
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # Kirim source code ke VPS
+      - name: Copy project to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "."
+          target: "~/diangraha-backend"
+
+      # SSH ke server dan build + deploy
+      - name: Deploy on VPS
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd ~/diangraha-backend
+
+            # Build JAR
+            ./mvnw clean package -DskipTests || mvn clean package -DskipTests
+  
+            # Jalankan Docker Compose
+            docker-compose up -d --build
+
+            # (Opsional) Hapus source code biar ringan
+            rm -rf ~/diangraha-backend
