@@ -48,5 +48,5 @@ jobs:
             echo "Build project Spring Boot..."
             ./mvnw clean package -DskipTests
 
-            echo Jalankan docker compose..."
+            echo "Jalankan docker compose..."
             docker compose up -d --build
