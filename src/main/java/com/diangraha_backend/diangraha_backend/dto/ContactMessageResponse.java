@@ -1,12 +1,14 @@
 package com.diangraha_backend.diangraha_backend.dto;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.Instant;
 
 @Data
 @AllArgsConstructor
+@Builder
 public class ContactMessageResponse {
     private Long id;
     private String fullName;

@@ -47,9 +47,13 @@ public class SecurityConfig {
                         
                         /* ==== CORS PREFLIGHT ==== */
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        
+                        .requestMatchers(HttpMethod.POST, "/api/contact-messages").permitAll()
+
+                        // Protected (GET, PUT, DELETE contact-messages)
+                        .requestMatchers("/api/contact-messages/**").authenticated()
                         /* ==== PUBLIC ENDPOINTS ==== */
                         .requestMatchers("/api/contact-messages/**").permitAll()
+                        .requestMatchers("/api/achievements", "/api/achievements/limit/**").permitAll()
                         .requestMatchers("/api/brands/**").permitAll()
                         .requestMatchers("/api/services/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()
