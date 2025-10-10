@@ -2,8 +2,11 @@ package com.diangraha_backend.diangraha_backend.controller;
 
 import com.diangraha_backend.diangraha_backend.dto.AchievementRequest;
 import com.diangraha_backend.diangraha_backend.dto.AchievementResponse;
+import com.diangraha_backend.diangraha_backend.dto.BrandRequest;
 import com.diangraha_backend.diangraha_backend.service.AchievementService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,24 +17,29 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/achievements")
 @RequiredArgsConstructor
+@Slf4j // <- tambahkan ini kalau mau pakai log.info / log.error
 public class AchievementController {
+
     private final AchievementService service;
 
     // GET all
     @GetMapping
     public List<AchievementResponse> getAllAchievements() {
+        log.info("Fetching all achievements");
         return service.getAllAchievements();
     }
 
     // GET by ID
     @GetMapping("/{id}")
     public ResponseEntity<AchievementResponse> getAchievementById(@PathVariable Long id) {
+        log.info("Fetching achievement by id={}", id);
         return ResponseEntity.ok(service.findById(id));
     }
 
     // GET limited
     @GetMapping("/limit/{count}")
     public List<AchievementResponse> getLimitedAchievements(@PathVariable int count) {
+        log.info("Fetching {} achievements", count);
         return service.getLimitedAchievements(count);
     }
 
@@ -41,8 +49,10 @@ public class AchievementController {
             @RequestParam("title") String title,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
-        AchievementRequest request = new AchievementRequest();
-        request.setTitle(title);
+        log.info("Creating achievement with title={}", title);
+        AchievementRequest request = AchievementRequest.builder()
+                .title(title)
+                .build();
         return ResponseEntity.ok(service.create(request, imageFile));
     }
 
@@ -53,14 +63,15 @@ public class AchievementController {
             @RequestParam("title") String title,
             @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
-        AchievementRequest request = new AchievementRequest();
-        request.setTitle(title);
+        AchievementRequest request = AchievementRequest.builder()
+                .title(title)
+                .build();
         return ResponseEntity.ok(service.update(id, request, imageFile));
     }
 
     @DeleteMapping("/{id}")
     public void deleteAchievement(@PathVariable Long id) {
+        log.warn("Deleting achievement id={}", id);
         service.deleteAchievement(id);
     }
 }
-

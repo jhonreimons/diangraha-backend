@@ -36,21 +36,13 @@ public class AchievementControllerTest {
 
     @Test
     public void testGetAllAchievements() throws Exception {
-        // Arrange
         AchievementResponse response1 = AchievementResponse.builder()
-                .id(1L)
-                .title("Achievement 1")
-                .imageUrl("url1")
-                .build();
+                .id(1L).title("Achievement 1").imageUrl("url1").build();
         AchievementResponse response2 = AchievementResponse.builder()
-                .id(2L)
-                .title("Achievement 2")
-                .imageUrl("url2")
-                .build();
+                .id(2L).title("Achievement 2").imageUrl("url2").build();
         List<AchievementResponse> responses = Arrays.asList(response1, response2);
         when(service.getAllAchievements()).thenReturn(responses);
 
-        // Act & Assert
         mockMvc.perform(get("/api/achievements"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -67,16 +59,10 @@ public class AchievementControllerTest {
 
     @Test
     public void testGetLimitedAchievements() throws Exception {
-        // Arrange
         AchievementResponse response = AchievementResponse.builder()
-                .id(1L)
-                .title("Achievement 1")
-                .imageUrl("url1")
-                .build();
-        List<AchievementResponse> responses = Arrays.asList(response);
-        when(service.getLimitedAchievements(5)).thenReturn(responses);
+                .id(1L).title("Achievement 1").imageUrl("url1").build();
+        when(service.getLimitedAchievements(5)).thenReturn(List.of(response));
 
-        // Act & Assert
         mockMvc.perform(get("/api/achievements/limit/5"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -90,20 +76,17 @@ public class AchievementControllerTest {
 
     @Test
     public void testCreateAchievement() throws Exception {
-        // Arrange
         AchievementResponse response = AchievementResponse.builder()
-                .id(1L)
-                .title("New Achievement")
-                .imageUrl("uploaded-url")
-                .build();
+                .id(1L).title("New Achievement").imageUrl("uploaded-url").build();
         when(service.create(any(), any())).thenReturn(response);
 
-        MockMultipartFile imageFile = new MockMultipartFile("imageFile", "image.jpg", "image/jpeg", "image content".getBytes());
+        MockMultipartFile imageFile = new MockMultipartFile(
+                "imageFile", "image.jpg", "image/jpeg", "image content".getBytes()
+        );
 
-        // Act & Assert
         mockMvc.perform(multipart("/api/achievements")
-                .file(imageFile)
-                .param("title", "New Achievement"))
+                        .file(imageFile)
+                        .param("title", "New Achievement"))   // pakai param, bukan file
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(1))
@@ -115,26 +98,20 @@ public class AchievementControllerTest {
 
     @Test
     public void testUpdateAchievement() throws Exception {
-        // Arrange
         AchievementResponse response = AchievementResponse.builder()
-                .id(1L)
-                .title("Updated Achievement")
-                .imageUrl("updated-url")
-                .build();
+                .id(1L).title("Updated Achievement").imageUrl("updated-url").build();
         when(service.update(eq(1L), any(), any())).thenReturn(response);
 
-        MockMultipartFile imageFile = new MockMultipartFile("imageFile", "image.jpg", "image/jpeg", "image content".getBytes());
+        MockMultipartFile imageFile = new MockMultipartFile(
+                "imageFile", "image.jpg", "image/jpeg", "image content".getBytes()
+        );
 
         MockMultipartHttpServletRequestBuilder builder = multipart("/api/achievements/1");
-        builder.with(request -> {
-            request.setMethod("PUT");
-            return request;
-        });
+        builder.with(request -> { request.setMethod("PUT"); return request; });
 
-        // Act & Assert
         mockMvc.perform(builder
-                .file(imageFile)
-                .param("title", "Updated Achievement"))
+                        .file(imageFile)
+                        .param("title", "Updated Achievement"))  // pakai param
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(1))
@@ -146,7 +123,6 @@ public class AchievementControllerTest {
 
     @Test
     public void testDeleteAchievement() throws Exception {
-        // Act & Assert
         mockMvc.perform(delete("/api/achievements/1"))
                 .andExpect(status().isOk());
 
