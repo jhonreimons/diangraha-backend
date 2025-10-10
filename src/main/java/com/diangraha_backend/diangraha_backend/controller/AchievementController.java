@@ -3,6 +3,7 @@ package com.diangraha_backend.diangraha_backend.controller;
 import com.diangraha_backend.diangraha_backend.dto.AchievementRequest;
 import com.diangraha_backend.diangraha_backend.dto.AchievementResponse;
 import com.diangraha_backend.diangraha_backend.service.AchievementService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,17 +13,20 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/achievements")
+@RequiredArgsConstructor
 public class AchievementController {
     private final AchievementService service;
-
-    public AchievementController(AchievementService service) {
-        this.service = service;
-    }
 
     // GET all
     @GetMapping
     public List<AchievementResponse> getAllAchievements() {
         return service.getAllAchievements();
+    }
+
+    // GET by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<AchievementResponse> getAchievementById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.findById(id));
     }
 
     // GET limited
