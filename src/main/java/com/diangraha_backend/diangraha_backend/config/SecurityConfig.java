@@ -17,6 +17,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
@@ -38,13 +42,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         /* ==== AUTH ENDPOINTS (MUST BE FIRST) ==== */
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
-                        
+
                         /* ==== SWAGGER ==== */
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
-                        
+
                         /* ==== STATIC FILES ==== */
                         .requestMatchers("/uploads/**").permitAll()
-                        
+
                         /* ==== CORS PREFLIGHT ==== */
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/contact-messages").permitAll()
@@ -57,7 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/brands/**").permitAll()
                         .requestMatchers("/api/services/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()
-                        
+
                         /* ==== AUTHENTICATED ENDPOINTS ==== */
                         .anyRequest().authenticated()
                 )
@@ -80,17 +84,19 @@ public class SecurityConfig {
 
     /* CORS untuk semua origin termasuk Postman */
     @Bean
+
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of("*")); // Allow all origins
+        cfg.setAllowedOriginPatterns(List.of("*"));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        cfg.setAllowedHeaders(List.of("*")); // Allow all headers
+        cfg.setAllowedHeaders(List.of("*"));
         cfg.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
-        cfg.setAllowCredentials(false); // Must be false for wildcard origins
+        cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", cfg);
         return source;
     }
+
 }
