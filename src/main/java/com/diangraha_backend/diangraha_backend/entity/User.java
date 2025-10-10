@@ -17,7 +17,7 @@ public class User {
     @Schema(description = "Unique identifier for user", example = "1")
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "username", unique = true, nullable = false)
     @Schema(description = "Unique username for user login", example = "john_doe", requiredMode = Schema.RequiredMode.REQUIRED, maxLength = 50)
     private String username;
 
