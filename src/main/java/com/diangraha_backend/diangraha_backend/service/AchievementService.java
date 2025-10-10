@@ -1,7 +1,9 @@
 package com.diangraha_backend.diangraha_backend.service;
 import com.diangraha_backend.diangraha_backend.dto.AchievementRequest;
 import com.diangraha_backend.diangraha_backend.dto.AchievementResponse;
+import com.diangraha_backend.diangraha_backend.dto.BrandResponse;
 import com.diangraha_backend.diangraha_backend.entity.Achievement;
+import com.diangraha_backend.diangraha_backend.entity.Brand;
 import com.diangraha_backend.diangraha_backend.repository.AchievementRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,13 @@ public class AchievementService {
         return repository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    // GET by ID
+    public AchievementResponse findById(Long id) {
+        Achievement achievement = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Achievement not found"));
+        return mapToResponse(achievement);
     }
 
     public List<AchievementResponse> getLimitedAchievements(int limit) {
