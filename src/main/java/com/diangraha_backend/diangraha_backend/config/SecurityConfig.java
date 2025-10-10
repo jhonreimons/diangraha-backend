@@ -57,7 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/contact-messages/**").authenticated()
                         /* ==== PUBLIC ENDPOINTS ==== */
                         .requestMatchers("/api/contact-messages/**").permitAll()
-                        .requestMatchers("/api/achievements", "/api/achievements/limit/**").permitAll()
+                        .requestMatchers("/api/achievements/**", "/api/achievements/limit/**").permitAll()
                         .requestMatchers("/api/brands/**").permitAll()
                         .requestMatchers("/api/services/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()

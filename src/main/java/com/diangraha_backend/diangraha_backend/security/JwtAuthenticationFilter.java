@@ -14,8 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-
-import com.diangraha_backend.diangraha_backend.security.JwtUtil;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -24,17 +23,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
 
+
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/api/services",
+            "/api/brands",
+            "/api/achievements",
+            "/api/contact-messages",
+            "/swagger-ui",
+            "/v3/api-docs",
+            "/api/auth/register",
+            "/api/auth/login"
+    );
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getRequestURI();
-        String method = request.getMethod();
 
- 
-        if ("GET".equalsIgnoreCase(method) &&
-                (path.startsWith("/api/services") || path.startsWith("/api/brands") || path.startsWith("/api/achievements"))) {
+        // Skip JWT filter jika path termasuk public
+        boolean isPublic = PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+        if (isPublic) {
             filterChain.doFilter(request, response);
             return;
         }

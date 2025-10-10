@@ -59,7 +59,9 @@ public class AchievementService {
         Achievement achievement = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Achievement not found"));
 
-        achievement.setTitle(request.getTitle());
+        if (request.getTitle() != null && !request.getTitle().isEmpty()) {
+            achievement.setTitle(request.getTitle());
+        }
 
         if (imageFile != null && !imageFile.isEmpty()) {
             String imageUrl = fileStorageService.storeFile(imageFile, "achievements");
@@ -68,6 +70,7 @@ public class AchievementService {
 
         return mapToResponse(repository.save(achievement));
     }
+
 
     public void deleteAchievement(Long id) {
         repository.deleteById(id);
