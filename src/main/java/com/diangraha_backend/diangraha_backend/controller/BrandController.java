@@ -50,7 +50,7 @@ public class BrandController {
         return ResponseEntity.ok(brandService.update(id, request, logoFile));
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         brandService.delete(id);
         return ResponseEntity.noContent().build();

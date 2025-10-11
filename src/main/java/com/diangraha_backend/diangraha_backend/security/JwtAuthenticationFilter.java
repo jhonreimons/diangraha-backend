@@ -27,13 +27,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // Public endpoints (tidak perlu login)
     private static final List<String> PUBLIC_PATHS = List.of(
-            "/api/services",
+/*            "/api/services",
             "/api/brands",
             "/api/achievements",
             "/swagger-ui",
             "/v3/api-docs",
             "/api/auth/register",
-            "/api/auth/login"
+            "/api/auth/login"*/
     );
 
     @Override
