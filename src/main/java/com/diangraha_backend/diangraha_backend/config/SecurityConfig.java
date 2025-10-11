@@ -35,30 +35,35 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .authorizeHttpRequests(auth -> auth
-                        // ==== AUTH ====
-                        .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+                        /* ==== AUTH ==== */
+                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
 
-                        // ==== CORS PREFLIGHT ====
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
-                        // ==== CONTACT MESSAGES ====
+                        /* ==== CONTACT-MESSAGES ==== */
                         .requestMatchers(HttpMethod.POST, "/api/contact-messages").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/contact-messages/**").authenticated()
 
-                        // ==== CRUD TERPROTEKSI ====
-                        .requestMatchers(HttpMethod.POST, "/api/achievements/**", "/api/brands/**", "/api/services/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/achievements/**", "/api/brands/**", "/api/services/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/achievements/**", "/api/brands/**", "/api/services/**").permitAll()
+                        /* ==== BRANDS ==== */
+                        .requestMatchers(HttpMethod.GET, "/api/brands/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/brands/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/brands/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/brands/**").authenticated()
 
-                        // ==== SWAGGER ====
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html",
-                                "/v3/api-docs/**", "/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
+                        /* ==== SERVICES ==== */
+                        .requestMatchers(HttpMethod.GET, "/api/services/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/services/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/services/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/services/**").authenticated()
 
-                        // ==== PUBLIC ====
-                        .requestMatchers(HttpMethod.GET, "/api/achievements/**", "/api/brands/**", "/api/services/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
+                        /* ==== ACHIEVEMENTS ==== */
+                        .requestMatchers(HttpMethod.GET, "/api/achievements/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/achievements/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/achievements/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/achievements/**").authenticated()
 
-                        // ==== FALLBACK ====
+                        /* ==== SWAGGER & FILES ==== */
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/uploads/**").permitAll()
+
+                        /* ==== DEFAULT ==== */
                         .anyRequest().authenticated()
                 )
 
