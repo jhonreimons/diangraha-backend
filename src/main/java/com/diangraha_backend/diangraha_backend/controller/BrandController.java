@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -32,7 +31,7 @@ public class BrandController {
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<BrandResponse> create(
             @RequestParam("name") String name,
-            @RequestParam(value = "logoFile", required = false) MultipartFile logoFile
+            @RequestParam(value = "logoFile") MultipartFile logoFile
     ) throws IOException {
         BrandRequest request = new BrandRequest();
         request.setName(name);
