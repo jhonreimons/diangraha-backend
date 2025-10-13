@@ -2,11 +2,9 @@ package com.diangraha_backend.diangraha_backend.controller;
 
 import com.diangraha_backend.diangraha_backend.dto.AchievementRequest;
 import com.diangraha_backend.diangraha_backend.dto.AchievementResponse;
-import com.diangraha_backend.diangraha_backend.dto.BrandRequest;
 import com.diangraha_backend.diangraha_backend.service.AchievementService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,7 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/achievements")
 @RequiredArgsConstructor
-@Slf4j // <- tambahkan ini kalau mau pakai log.info / log.error
+@Slf4j // log.error
 public class AchievementController {
 
     private final AchievementService service;

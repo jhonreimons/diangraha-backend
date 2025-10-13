@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class BrandService {
 
     private final BrandRepository brandRepository;
-    private final FileStorageService fileStorageService; // untuk simpan logo
+    private final FileStorageService fileStorageService;
 
     public BrandResponse create(BrandRequest request, MultipartFile logoFile) throws IOException {
         Brand brand = new Brand();

@@ -8,7 +8,6 @@ import lombok.Setter;
 public class LoginResponse {
     private String token;
 
-    // Constructor yang benar harus sama dengan nama class
     public LoginResponse(String token) {
         this.token = token;
     }

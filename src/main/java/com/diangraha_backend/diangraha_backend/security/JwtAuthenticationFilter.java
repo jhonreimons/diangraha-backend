@@ -41,29 +41,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
-        // 🔹 1. Selalu skip untuk endpoint publik di atas
         boolean isAlwaysPublic = ALWAYS_PUBLIC_PATHS.stream().anyMatch(path::startsWith);
         if (isAlwaysPublic) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 🔹 2. Skip JWT untuk GET publik (brands, services, achievements)
         if ("GET".equalsIgnoreCase(method) &&
                 (path.startsWith("/api/brands") ||
                         path.startsWith("/api/services") ||
-                        path.startsWith("/api/achievements"))) {
+                        path.startsWith("/api/achievements") ||
+                        path.startsWith(("/api/clients")))) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 🔹 3. Skip JWT untuk POST contact-messages (publik)
         if ("POST".equalsIgnoreCase(method) && path.startsWith("/api/contact-messages")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 🔹 4. Semua GET contact-messages (dan endpoint lain) → tetap butuh JWT
         final String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
