@@ -45,7 +45,7 @@ public class AchievementController {
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<AchievementResponse> create(
             @RequestParam("title") String title,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
+            @RequestParam(value = "imageFile") MultipartFile imageFile
     ) throws IOException {
         log.info("Creating achievement with title={}", title);
         AchievementRequest request = AchievementRequest.builder()

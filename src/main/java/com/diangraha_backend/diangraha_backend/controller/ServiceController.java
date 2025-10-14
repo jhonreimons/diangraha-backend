@@ -27,7 +27,7 @@ public class ServiceController {
             @RequestParam("name") String name,
             @RequestParam("shortDesc") String shortDesc,
             @RequestParam("longDesc") String longDesc,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
+            @RequestParam(value = "imageFile") MultipartFile imageFile
     ) throws IOException {
         ServiceRequest request = new ServiceRequest(name, shortDesc, longDesc, imageFile);
         return ResponseEntity.ok(serviceService.createService(request));
