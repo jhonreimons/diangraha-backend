@@ -22,12 +22,12 @@ public class ClientService {
                 .collect(Collectors.toList());
     }
 
-    public ClientResponse create(ClientRequest request, MultipartFile logoFile) throws IOException {
+    public ClientResponse create(ClientRequest request, MultipartFile imageUrl) throws IOException {
         Client client = new Client();
         client.setName(request.getName());
 
-        if (logoFile != null && !logoFile.isEmpty()) {
-            String logoPath = fileStorageService.storeFile(logoFile, "clients");
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            String logoPath = fileStorageService.storeFile(imageUrl, "clients");
         }
 
         Client saved = clientRepository.save(client);
@@ -47,7 +47,7 @@ public class ClientService {
         client.setName(request.getName());
 
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            String logoPath = fileStorageService.storeFile(imageUrl, "brands");
+            String logoPath = fileStorageService.storeFile(imageUrl, "clients");
             client.setImageUrl(logoPath);
         }
 
