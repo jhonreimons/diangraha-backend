@@ -22,17 +22,18 @@ public class ClientService {
                 .collect(Collectors.toList());
     }
 
-    public ClientResponse create(ClientRequest request, MultipartFile imageUrl) throws IOException {
-        Client client = new Client();
-        client.setName(request.getName());
+        public ClientResponse create(ClientRequest request, MultipartFile imageUrl) throws IOException {
+            Client client = new Client();
+            client.setName(request.getName());
 
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            String logoPath = fileStorageService.storeFile(imageUrl, "clients");
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                String logoPath = fileStorageService.storeFile(imageUrl, "clients");
+                client.setImageUrl(logoPath);
+            }
+
+            Client saved = clientRepository.save(client);
+            return mapToResponse(saved);
         }
-
-        Client saved = clientRepository.save(client);
-        return mapToResponse(saved);
-    }
 
     public ClientResponse findById(Long id) {
         Client client = clientRepository.findById(id)
