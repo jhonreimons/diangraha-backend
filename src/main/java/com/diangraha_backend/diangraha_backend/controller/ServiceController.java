@@ -3,6 +3,7 @@ package com.diangraha_backend.diangraha_backend.controller;
 import com.diangraha_backend.diangraha_backend.dto.*;
 import com.diangraha_backend.diangraha_backend.service.ServiceService;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,8 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/services")
-
-
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class ServiceController {
 
     private final ServiceService serviceService;
