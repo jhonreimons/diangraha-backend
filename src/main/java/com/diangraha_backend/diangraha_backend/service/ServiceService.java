@@ -5,12 +5,12 @@ import com.diangraha_backend.diangraha_backend.entity.ServiceEntity;
 import com.diangraha_backend.diangraha_backend.entity.ServiceFeature;
 import com.diangraha_backend.diangraha_backend.repository.ServiceFeatureRepository;
 import com.diangraha_backend.diangraha_backend.repository.ServiceRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,7 +64,6 @@ public class ServiceService {
                 .collect(Collectors.toList());
     }
 
-
     // GET BY ID
     public ServiceResponse getById(Long id) {
         ServiceEntity service = serviceRepository.findByIdWithFeatures(id)
@@ -103,16 +102,16 @@ public class ServiceService {
     public ServiceFeatureResponse updateFeature(Long serviceId, Long featureId, ServiceFeatureRequest request) {
         ServiceFeature feature = featureRepository.findById(featureId)
                 .orElseThrow(() -> new RuntimeException("Feature not found"));
-        
+
         if (!feature.getService().getId().equals(serviceId)) {
             throw new RuntimeException("Feature does not belong to this service");
         }
-        
+
         feature.setFeatureName(request.getFeatureName());
         feature.setFeatureDesc(request.getFeatureDesc());
-        
+
         ServiceFeature updated = featureRepository.save(feature);
-        
+
         return new ServiceFeatureResponse(
                 updated.getId(),
                 updated.getFeatureName(),
@@ -124,26 +123,57 @@ public class ServiceService {
     public void deleteFeature(Long serviceId, Long featureId) {
         ServiceFeature feature = featureRepository.findById(featureId)
                 .orElseThrow(() -> new RuntimeException("Feature not found"));
-        
+
         if (!feature.getService().getId().equals(serviceId)) {
             throw new RuntimeException("Feature does not belong to this service");
         }
-        
+
         featureRepository.deleteById(featureId);
     }
 
     private ServiceResponse mapToResponse(ServiceEntity service) {
-        return new ServiceResponse(
-                service.getId(),
-                service.getName(),
-                service.getShortDesc(),
-                service.getLongDesc(),
-                service.getImageUrl(),
-                service.getFeatures() != null ?
-                        service.getFeatures().stream()
-                                .map(f -> new ServiceFeatureResponse(f.getId(), f.getFeatureName(), f.getFeatureDesc()))
-                                .collect(Collectors.toList())
-                        : List.of()
-        );
+        return ServiceResponse.builder()
+                .id(service.getId())
+                .name(service.getName())
+                .shortDesc(service.getShortDesc())
+                .longDesc(service.getLongDesc())
+                .imageUrl(service.getImageUrl())
+
+                // Map features
+                .features(service.getFeatures() != null
+                        ? service.getFeatures().stream()
+                        .map(f -> ServiceFeatureResponse.builder()
+                                .id(f.getId())
+                                .featureName(f.getFeatureName())
+                                .featureDesc(f.getFeatureDesc())
+                                .build())
+                        .collect(Collectors.toList())
+                        : Collections.emptyList())
+
+                // Map subservices
+                .subService(service.getSubServices() != null
+                        ? service.getSubServices().stream()
+                        .map(sub -> SubServiceResponse.builder()
+                                .id(sub.getId())
+                                .name(sub.getName())
+                                .description(sub.getDescription())
+
+                                // Map works
+                                .works(sub.getWorks() != null
+                                        ? sub.getWorks().stream()
+                                        .map(w -> SubServiceWorkResponse.builder()
+                                                .id(w.getId())
+                                                .description(w.getDescription())
+                                                .build())
+                                        .collect(Collectors.toList())
+                                        : Collections.emptyList())
+                                .build())
+                        .collect(Collectors.toList())
+                        : Collections.emptyList())
+
+                // Kosongkan works di level service
+                .subServiceWorks(Collections.emptyList())
+
+                .build();
     }
 }
