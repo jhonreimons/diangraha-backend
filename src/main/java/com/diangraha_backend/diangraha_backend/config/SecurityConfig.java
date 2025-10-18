@@ -41,7 +41,6 @@ public class SecurityConfig {
                         /* ==== CONTACT-MESSAGES ==== */
                         .requestMatchers(HttpMethod.POST, "/api/contact-messages").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/contact-messages/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/sub-services/**").permitAll()
 
                         /* ==== CLIENTS ==== */
                         .requestMatchers(HttpMethod.GET, "/api/clients/**").permitAll()
