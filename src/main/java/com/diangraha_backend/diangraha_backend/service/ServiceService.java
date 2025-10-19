@@ -99,6 +99,7 @@ public class ServiceService {
                 .orElseThrow(() -> new RuntimeException("Work of Sub Services not found"));
         SubServiceWork subServiceWork = new SubServiceWork();
         subServiceWork.setDescription(request.getDescription());
+        subServiceWork.setSubService(subService);
 
         SubServiceWork save = subServiceWorkRepository.save(subServiceWork);
 
