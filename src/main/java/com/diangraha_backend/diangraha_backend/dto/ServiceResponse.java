@@ -17,5 +17,6 @@ public class ServiceResponse {
     private String longDesc;
     private String imageUrl;
     private List<ServiceFeatureResponse> features;
+    private List<SubServiceResponse> subServices;
 }
 
