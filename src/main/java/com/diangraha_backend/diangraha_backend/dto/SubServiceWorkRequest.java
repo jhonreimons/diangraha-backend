@@ -8,6 +8,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SubServiceWorkRequest {
-    private String name;
     private String description;
 }
