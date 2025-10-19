@@ -4,6 +4,7 @@ import com.diangraha_backend.diangraha_backend.dto.*;
 import com.diangraha_backend.diangraha_backend.entity.SubServiceWork;
 import com.diangraha_backend.diangraha_backend.service.ServiceService;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,17 +69,24 @@ public class ServiceController {
     }
 
 
-    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServiceResponse> updateService(
             @PathVariable Long id,
             @RequestParam("name") String name,
             @RequestParam("shortDesc") String shortDesc,
             @RequestParam("longDesc") String longDesc,
-            @RequestParam(value = "imageFile", required = false) MultipartFile imageFile
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile
     ) throws IOException {
-        ServiceRequest request = new ServiceRequest(name, shortDesc, longDesc, imageFile);
-        return ResponseEntity.ok(serviceService.updateService(id, request));
+        ServiceRequest request = new ServiceRequest();
+        request.setName(name);
+        request.setShortDesc(shortDesc);
+        request.setLongDesc(longDesc);
+        request.setImageFile(imageFile);
+
+        ServiceResponse response = serviceService.updateService(id, request);
+        return ResponseEntity.ok(response);
     }
+
 
 
     @PutMapping("/{serviceId}/features/{featureId}")
