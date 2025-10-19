@@ -9,7 +9,7 @@ import com.diangraha_backend.diangraha_backend.repository.ServiceFeatureReposito
 import com.diangraha_backend.diangraha_backend.repository.ServiceRepository;
 import com.diangraha_backend.diangraha_backend.repository.SubServiceRepository;
 import com.diangraha_backend.diangraha_backend.repository.SubServiceWorkRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -150,6 +151,51 @@ public class ServiceService {
                 .orElseThrow(() -> new RuntimeException("Service not found"));
         return mapToResponse(service);
     }
+
+    // Get By ID for Sub Services
+
+    @Transactional(readOnly = true)
+    public Optional<SubServiceResponse> getSubServiceById(Long id) {
+        return subServiceRepository.findById(id)
+                .map(this::mapToDto);
+    }
+
+    private SubServiceResponse mapToDto(SubService entity) {
+        // pastikan works diinisialisasi (karena LAZY), @Transactional pada method menjamin session aktif
+        var works = (entity.getWorks() == null) ? java.util.List.<SubServiceWorkResponse>of()
+                : entity.getWorks().stream()
+                .map(this::mapWorkToDto)
+                .collect(Collectors.toList());
+
+        return SubServiceResponse.builder()
+                .id(entity.getId())
+                .name(entity.getName())
+                .description(entity.getDescription())
+                .works(works)
+                .build();
+    }
+
+    private SubServiceWorkResponse mapWorkToDto(SubServiceWork work) {
+        return SubServiceWorkResponse.builder()
+                .id(work.getId())
+                .description(work.getDescription())
+                .build();
+    }
+
+    // Get by id work
+    public SubServiceWorkResponse getWorkById(Long id) {
+        SubServiceWork subServiceWork = subServiceWorkRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Service not found"));
+        return mapToResponseWork(subServiceWork);
+    }
+
+    private SubServiceWorkResponse mapToResponseWork(SubServiceWork work) {
+        return SubServiceWorkResponse.builder()
+                .id(work.getId())
+                .description(work.getDescription())
+                .build();
+    }
+   // @Transactional(readOnly = true)
 
     // UPDATE Service
     public ServiceResponse updateService(Long id, ServiceRequest request) throws IOException {

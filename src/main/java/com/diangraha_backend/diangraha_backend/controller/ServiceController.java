@@ -68,6 +68,17 @@ public class ServiceController {
         return ResponseEntity.ok(serviceService.getById(id));
     }
 
+    @GetMapping("/sub-services/{id}")
+    public ResponseEntity<SubServiceResponse> getSubServiceById(@PathVariable Long id) {
+        return serviceService.getSubServiceById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/sub-services/works/{id}")
+    public ResponseEntity<SubServiceWorkResponse> getWorkById(@PathVariable Long id) {
+        return ResponseEntity.ok(serviceService.getWorkById(id));
+    }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ServiceResponse> updateService(
