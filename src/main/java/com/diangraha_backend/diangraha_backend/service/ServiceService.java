@@ -198,21 +198,37 @@ public class ServiceService {
    // @Transactional(readOnly = true)
 
     // UPDATE Service
+    @Transactional
     public ServiceResponse updateService(Long id, ServiceRequest request) throws IOException {
+        // 🔹 Ambil data service dari DB
         ServiceEntity service = serviceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Service not found"));
 
+        // 🔹 Update field utama (tidak sentuh relasi anak)
         service.setName(request.getName());
         service.setShortDesc(request.getShortDesc());
         service.setLongDesc(request.getLongDesc());
 
+        // Update image hanya jika user upload file baru
         MultipartFile imageFile = request.getImageFile();
         if (imageFile != null && !imageFile.isEmpty()) {
             String imagePath = fileStorageService.storeFile(imageFile, "services");
             service.setImageUrl(imagePath);
         }
 
+        // Simpan perubahan parent saja
         ServiceEntity updated = serviceRepository.save(service);
+
+        // Force load relasi anak agar tidak LazyInitializationException
+        // (biar mapToResponse() bisa akses tanpa error)
+        if (updated.getFeatures() != null) updated.getFeatures().size();
+        if (updated.getSubServices() != null) {
+            updated.getSubServices().forEach(sub -> {
+                if (sub.getWorks() != null) sub.getWorks().size();
+            });
+        }
+
+        //  Kembalikan response aman
         return mapToResponse(updated);
     }
 

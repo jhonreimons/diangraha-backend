@@ -1,5 +1,6 @@
 package com.diangraha_backend.diangraha_backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,10 +24,12 @@ public class SubService {
     private String description;
 
     @ManyToOne
+    @JsonManagedReference
     @JoinColumn(name = "service_id", nullable = false)
     private ServiceEntity service;
 
     @OneToMany(mappedBy = "subService", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonManagedReference
     private List<SubServiceWork> works = new ArrayList<>();
 }
