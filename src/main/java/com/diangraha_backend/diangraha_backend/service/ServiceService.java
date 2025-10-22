@@ -345,7 +345,7 @@ public class ServiceService {
             throw new RuntimeException("Sub service nto belong to this services");
         }
 
-        subServiceRepository.deleteById(subServiceWorkId);
+        subServiceWorkRepository.deleteById(subServiceWorkId);
     }
     private ServiceResponse mapToResponse(ServiceEntity service) {
         return ServiceResponse.builder()
