@@ -299,21 +299,33 @@ public class ServiceService {
     }
 
     // Update service
-    public  SubServiceWorkResponse updateSubServiceWork ( Long subServiceId, Long subServiceWorkId, SubServiceWorkRequest request){
-
+    public SubServiceWorkResponse updateSubServiceWork(
+            Long subServiceId,
+            Long subServiceWorkId,
+            SubServiceWorkRequest request
+    ) {
+        // Ambil data dari database
         SubServiceWork subServiceWork = subServiceWorkRepository.findById(subServiceWorkId)
-                .orElseThrow(() -> new RuntimeException("Sub Service not found"));
+                .orElseThrow(() -> new RuntimeException("Sub Service Work not found"));
 
+        // Validasi relasi subService
         if (!subServiceWork.getSubService().getId().equals(subServiceId)) {
-            throw new RuntimeException("list work does not belong to this service");
+            throw new RuntimeException("List work does not belong to this service");
         }
+
+        // Update field dari request
+        subServiceWork.setDescription(request.getDescription());
+
+        // Simpan perubahan ke database
         SubServiceWork updated = subServiceWorkRepository.save(subServiceWork);
 
+        // Kembalikan response dengan data terbaru
         return new SubServiceWorkResponse(
                 updated.getId(),
                 updated.getDescription()
         );
     }
+
 
     // DELETE Feature
     public void deleteFeature(Long serviceId, Long featureId) {
