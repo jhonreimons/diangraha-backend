@@ -28,7 +28,7 @@ public class ServiceEntity {
     @Column(name = "long_desc")
     private String longDesc;
 
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl;
 
     @OneToMany(mappedBy = "service", cascade = CascadeType.ALL, orphanRemoval = true)
