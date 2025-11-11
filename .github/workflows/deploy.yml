@@ -83,24 +83,22 @@ jobs:
             aws.s3.bucket-name=$AMAZON_BUCKET_NAME
             EOF
             echo "✅ .env created"
-
-          echo "=== STAGE 3: Stop Old Containers ==="
+  
+            echo "=== STAGE 3: Stop Old Containers ==="
             docker stop diangraha-backend || true
             docker rm diangraha-backend || true
-            echo "✅ Containers stopped"
-
-          echo "=== STAGE 4: Build JAR Application ==="
+            
+            echo "=== STAGE 4: Build JAR Application ==="
             rm -rf target/
             ./mvnw clean package -DskipTests -U
             
             if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
-          echo "❌ ERROR: JAR file not found"
+            echo "❌ ERROR: JAR file not found"
             exit 1
             fi
             echo "✅ JAR built successfully"
-
-          echo "=== STAGE 5: Test JAR Application (port 8081) ==="
             
+            echo "=== STAGE 5: Test JAR Application (port 8081) ==="
             set -a
             source .env
             set +a
@@ -133,13 +131,12 @@ jobs:
             
             kill $JAR_PID || true
             echo "✅ Test JAR stopped"
-
-          echo "=== STAGE 6: Build Docker Image & Deploy ==="
+            
+            echo "=== STAGE 6: Build Docker Image & Deploy ==="
             docker compose build --no-cache app
             docker compose up -d app
-            echo "✅ Docker container started"
-
-          echo "=== STAGE 7: Health Check ==="
+            
+            echo "=== STAGE 7: Health Check ==="
             sleep 15
             
             if curl -fs http://localhost:8080/api/brands >/dev/null; then
