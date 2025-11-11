@@ -38,57 +38,57 @@ jobs:
             fi
 
             echo "=== STAGE 3: Create .env file ==="
-            cat << 'EOF' > .env
-            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            MYSQL_USER=${{ secrets.MYSQL_USER }}
-            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-            
-            SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
-            SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
-            SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-            
-            AMAZON_ACCESS_KEY=${{ secrets.AMAZON_ACCESS_KEY }}
-            AMAZON_SECRET_KEY=${{ secrets.AMAZON_SECRET_KEY }}
-            AMAZON_BUCKET_NAME=${{ secrets.AMAZON_BUCKET_NAME }}
-            AMAZON_REGION=${{ secrets.AMAZON_REGION }}
-            EOF
-            echo "✅ .env created"
+            cat <<EOF > .env
+  MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+  MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+  MYSQL_USER=${{ secrets.MYSQL_USER }}
+  MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+  
+  SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
+  SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
+  SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+  
+  AMAZON_ACCESS_KEY=${{ secrets.AMAZON_ACCESS_KEY }}
+  AMAZON_SECRET_KEY=${{ secrets.AMAZON_SECRET_KEY }}
+  AMAZON_BUCKET_NAME=${{ secrets.AMAZON_BUCKET_NAME }}
+  AMAZON_REGION=${{ secrets.AMAZON_REGION }}
+  EOF
+  echo "✅ .env created"
 
-          echo "=== STAGE 4: Stop previous container ==="
-            docker stop diangraha-backend || true
-            docker rm diangraha-backend || true
+echo "=== STAGE 4: Stop previous container ==="
+  docker stop diangraha-backend || true
+  docker rm diangraha-backend || true
 
-          echo "=== STAGE 5: Build JAR ==="
-            rm -rf target || true
-            ./mvnw -q clean package -DskipTests
-            
-            if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
-          echo "❌ Build failed: JAR missing!"
-            exit 1
-            fi
-            echo "✅ Build success"
+echo "=== STAGE 5: Build JAR ==="
+  rm -rf target || true
+  ./mvnw -q clean package -DskipTests
+  
+  if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
+echo "❌ Build failed: JAR missing!"
+  exit 1
+  fi
+  echo "✅ Build success"
 
-          echo "=== STAGE 6: Quick springboot test ==="
-            timeout 15s java -jar target/diangraha-backend-0.0.1-SNAPSHOT.jar \
-            --spring.profiles.active=test > /dev/null 2>&1 || true
-            echo "✅ Spring Boot test passed"
+echo "=== STAGE 6: Quick Spring Boot test (smoke test) ==="
+  timeout 15s java -jar target/diangraha-backend-0.0.1-SNAPSHOT.jar \
+  --spring.profiles.active=test > /dev/null 2>&1 || true
+  echo "✅ Spring Boot test passed"
 
-          echo "=== STAGE 7: Build container ==="
-            docker compose build --no-cache app
-            echo "✅ Docker image built"
+echo "=== STAGE 7: Build container ==="
+  docker compose build --no-cache app
+  echo "✅ Docker image built"
 
-          echo "=== STAGE 8: Deploy container ==="
-            docker compose up -d app
-            echo "✅ Deployment started"
+echo "=== STAGE 8: Deploy container ==="
+  docker compose up -d app
+  echo "✅ Deployment started"
 
-          echo "=== STAGE 9: Health check ==="
-            sleep 10
-            
-            if curl -fs http://localhost:8080/api/brands > /dev/null; then
-            echo "🎉 Deployment SUCCESS!"
-            else
-            echo "❌ App not responding"
-            docker compose logs app --tail=50
-            exit 1
-            fi
+echo "=== STAGE 9: Health check ==="
+  sleep 10
+  
+  if curl -fs http://localhost:8080/api/brands > /dev/null; then
+  echo "🎉 Deployment SUCCESS!"
+  else
+  echo "❌ App not responding"
+  docker compose logs app --tail=50
+  exit 1
+  fi
