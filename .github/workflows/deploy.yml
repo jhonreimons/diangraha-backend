@@ -1,23 +1,26 @@
-name: Deploy Backend (Spring Boot + Docker Compose)
+name: Deploy to Server
 
 on:
   push:
-    branches:
-      - main   # otomatis deploy setiap ada push ke main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🚀 Connect to VPS and deploy Spring Boot
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Skip copy, use git pull instead
+
+      - name: Build and Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          # Pass secrets as environment variables to the remote script
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          # Pass all secrets as environment variables to the remote script
           envs: |
             MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
             MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
@@ -28,53 +31,54 @@ jobs:
             SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
             AMAZON_ACCESS_KEY=${{ secrets.AMAZON_ACCESS_KEY }}
             AMAZON_SECRET_KEY=${{ secrets.AMAZON_SECRET_KEY }}
-            AMAZON_BUCKET_NAME=${{ secrets.AMAZON_BUCKET_NAME }}
             AMAZON_REGION=${{ secrets.AMAZON_REGION }}
+            AMAZON_BUCKET_NAME=${{ secrets.AMAZON_BUCKET_NAME }}
           script: |
             set -e  # Exit on any error
 
-            # === Configuration ===
-            APP_DIR="$HOME/diangraha-backend"
-
-            echo ">>> Checking prerequisites (Docker, Docker Compose, Git, Java)..."
+            echo ">>> Checking prerequisites (Docker, Docker Compose, Git, Java, Maven)..."
             if ! command -v docker &> /dev/null; then
-              echo "❌ Docker not found. Installing Docker..."
-              sudo apt-get update && sudo apt-get install -y docker.io
+              echo "❌ Docker not found. Please install Docker on VPS manually."
+              exit 1
             fi
-            if ! command -v docker compose &> /dev/null; then
-              echo "❌ Docker Compose not found. Installing Docker Compose..."
-              sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+            if ! command -v docker compose &> /dev/null && ! command -v docker-compose &> /dev/null; then
+              echo "❌ Docker Compose not found. Please install Docker Compose on VPS manually."
+              exit 1
             fi
             if ! command -v git &> /dev/null; then
-              echo "❌ Git not found. Installing Git..."
-              sudo apt-get update && sudo apt-get install -y git
+              echo "❌ Git not found. Please install Git on VPS manually."
+              exit 1
             fi
             if ! command -v java &> /dev/null; then
-              echo "❌ Java not found. Installing OpenJDK..."
-              sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
+              echo "❌ Java not found. Please install Java on VPS manually."
+              exit 1
+            fi
+            if ! command -v mvn &> /dev/null && [ ! -f "./mvnw" ]; then
+              echo "❌ Maven not found and no Maven Wrapper. Please install Maven on VPS manually."
+              exit 1
             fi
             echo "✅ Prerequisites OK"
 
-            echo ">>> Ensuring application directory exists"
-            mkdir -p "$APP_DIR"
-
-            if [ ! -d "$APP_DIR/.git" ]; then
-              echo ">>> Fresh clone of repository"
-              rm -rf "$APP_DIR"
-              git clone https://github.com/jhonreimons/diangraha-backend.git "$APP_DIR"
+            echo "=== STAGE 1: Git Pull Latest Code ==="
+            cd /srv/myapp
+            
+            # Check if directory exists, pull or clone accordingly
+            if [ -d "diangraha-backend" ]; then
+                echo "Directory exists, pulling latest changes..."
+                cd diangraha-backend
+                git fetch origin
+                git reset --hard origin/main
+                git clean -fd
+                echo "✅ Latest code pulled"
+            else
+                echo "Directory not found, cloning repository..."
+                git clone https://github.com/jhonreimons/diangraha-backend.git
+                cd diangraha-backend
+                echo "✅ Fresh code cloned"
             fi
 
-            echo ">>> Entering application folder"
-            cd "$APP_DIR"
-
-            echo ">>> Pulling latest version from main branch"
-            git checkout main
-            git fetch origin main
-            git reset --hard origin/main
-            echo "✅ Repository updated"
-
-            echo ">>> Generating .env file"
-            cat <<EOF > .env
+            echo "=== STAGE 2: Create Environment Config ==="
+            cat > .env <<EOL
             MYSQL_DATABASE=$MYSQL_DATABASE
             MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
             MYSQL_USER=$MYSQL_USER
@@ -84,33 +88,145 @@ jobs:
             SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD
             AMAZON_ACCESS_KEY=$AMAZON_ACCESS_KEY
             AMAZON_SECRET_KEY=$AMAZON_SECRET_KEY
-            AMAZON_BUCKET_NAME=$AMAZON_BUCKET_NAME
             AMAZON_REGION=$AMAZON_REGION
-            EOF
-            echo "✅ .env file created"
+            AMAZON_BUCKET_NAME=$AMAZON_BUCKET_NAME
+            EOL
+            echo "✅ Environment config created (including Amazon S3)"
 
-            echo ">>> Cleaning previous JAR build"
-            rm -rf target
+            echo "=== STAGE 3: Stop Old Containers ==="
+            docker stop diangraha-backend || true
+            docker rm diangraha-backend || true
+            echo "✅ Old containers stopped"
 
-            echo ">>> Building JAR using Maven"
-            if [ -f "./mvnw" ]; then
-              ./mvnw -q clean package -DskipTests
+            echo "=== STAGE 4: Build JAR Application ==="
+            # Force clean build with cache clear
+            rm -rf target/ || true
+            rm -rf ~/.m2/repository/com/diangraha-backend || true
+            ./mvnw clean package -DskipTests -U
+            if ! ls target/diangraha-backend-0.0.1-SNAPSHOT.jar 1> /dev/null 2>&1; then
+                echo "❌ ERROR: JAR file not found!"
+                exit 1
+            fi
+            echo "✅ JAR build successful: $(ls -la target/*.jar)"
+
+            echo "=== STAGE 5: Test JAR Application ==="
+            echo "Starting JAR test..."
+            timeout 30s java -jar target/diangraha-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=test > jar-test.log 2>&1 &
+            JAR_PID=$!
+            sleep 15
+            
+            if ps -p $JAR_PID > /dev/null; then
+                echo "✅ JAR application started successfully"
+                kill $JAR_PID || true
             else
-              echo "Maven Wrapper not found, using system Maven..."
-              mvn -q clean package -DskipTests
+                echo "❌ JAR application failed to start"
+                cat jar-test.log
+                exit 1
             fi
 
-            # Verify JAR was created
-            if [ ! -f "target/*.jar" ]; then
-              echo "❌ JAR build failed! No JAR file found in target/"
-              exit 1
+            echo "=== STAGE 6: Test Database Connection ==="
+            # Test connection ke external database
+            timeout 20s java -jar target/diangraha-backend-0.0.1-SNAPSHOT.jar \
+                --spring.datasource.url=$SPRING_DATASOURCE_URL \
+                --spring.datasource.username=$SPRING_DATASOURCE_USERNAME \
+                --spring.datasource.password=$SPRING_DATASOURCE_PASSWORD \
+                --spring.jpa.hibernate.ddl-auto=validate \
+                --server.port=8081 > db-test.log 2>&1 &
+            DB_TEST_PID=$!
+            sleep 10
+            
+            if ps -p $DB_TEST_PID > /dev/null; then
+                echo "✅ Database connection successful"
+                kill $DB_TEST_PID || true
+            else
+                echo "❌ Database connection failed"
+                cat db-test.log
+                exit 1
             fi
-            echo "✅ JAR build successful"
 
-            echo ">>> Running Docker Compose"
-            docker compose up -d --build --remove-orphans
+            echo "=== STAGE 7: Build Application Container ==="
+            # Remove old images and build fresh
+            docker rmi diangraha-backend-app || true
+            if command -v docker compose &> /dev/null; then
+              docker compose build app --no-cache --pull
+            else
+              docker-compose build app --no-cache --pull
+            fi
+            echo "✅ Application container built"
 
-            echo ">>> Cleaning up unused Docker images"
-            docker image prune -f
+            echo "=== STAGE 8: Deploy Application Container ==="
+            echo "Debug: Checking .env file..."
+            cat .env
+            
+            echo "Debug: Testing environment variables..."
+            if command -v docker compose &> /dev/null; then
+              docker compose config
+              docker compose up -d app
+            else
+              docker-compose config
+              docker-compose up -d app
+            fi
+            echo "✅ Application container deployed"
+            
+            echo "Debug: Checking container environment..."
+            docker exec diangraha-backend env | grep SPRING || echo "No SPRING env vars found"
 
-            echo "✅ Deployment SUCCESSFUL!"
+            echo "=== STAGE 9: Monitor Deployment ==="
+            echo "Waiting for application to start..."
+            sleep 30
+            
+            echo "=== Container Status ==="
+            if command -v docker compose &> /dev/null; then
+              docker compose ps
+            else
+              docker-compose ps
+            fi
+            
+            echo "=== Application Logs ==="
+            if command -v docker compose &> /dev/null; then
+              docker compose logs app --tail=30
+            else
+              docker-compose logs app --tail=30
+            fi
+            
+            echo "=== Health Check ==="
+            echo "Checking if port 8080 is listening..."
+            netstat -tlnp | grep 8080 || echo "Port 8080 not listening"
+            
+            echo "Checking Java processes..."
+            ps aux | grep java || echo "No Java processes found"
+            
+            echo "Testing basic connectivity..."
+            curl -v http://localhost:8080/ || echo "Cannot connect to localhost:8080"
+            
+            for i in {1..10}; do
+                if curl -f http://localhost:8080/api/brands > /dev/null 2>&1; then
+                    echo "✅ Application is healthy and responding"
+                    break
+                elif [ $i -eq 10 ]; then
+                    echo "❌ Application health check failed"
+                    echo "=== Full Application Logs ==="
+                    if command -v docker compose &> /dev/null; then
+                      docker compose logs app --tail=100
+                    else
+                      docker-compose logs app --tail=100
+                    fi
+                    echo "=== Container Status ==="
+                    docker ps -a
+                    echo "=== Port Check ==="
+                    netstat -tlnp | grep 8080
+                    exit 1
+                else
+                    echo "Health check attempt $i/10..."
+                    sleep 5
+                fi
+            done
+
+            echo "=== STAGE 10: Final Verification ==="
+            echo "Testing Swagger UI..."
+            curl -I http://localhost:8080/swagger-ui/index.html || echo "⚠️  Swagger UI not accessible"
+            
+            echo "Testing API endpoint..."
+            curl -I http://localhost:8080/api/brands || echo "⚠️  API endpoint not accessible"
+            
+            echo "🎉 Deployment completed successfully!"
