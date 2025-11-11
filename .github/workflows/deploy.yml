@@ -2,7 +2,8 @@ name: Deploy Backend to Server
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -19,82 +20,75 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "=== STAGE 1: Ensure Project Directory Exists ==="
+            echo "=== STAGE 1: Ensure directory exists ==="
             mkdir -p /srv/myapp
             cd /srv/myapp
 
-            echo "=== STAGE 2: Pull Latest Code ==="
+            echo "=== STAGE 2: Pull latest code ==="
             if [ -d "diangraha-backend" ]; then
-                cd diangraha-backend
-                git fetch origin
-                git reset --hard origin/main
-                git clean -fd
-                echo "✅ Project updated"
+              cd diangraha-backend
+              git fetch origin
+              git reset --hard origin/main
+              git clean -fd
+              echo "✅ Code updated"
             else
-                git clone https://github.com/jhonreimons/diangraha-backend.git
-                cd diangraha-backend
-                echo "✅ Repository cloned"
+              git clone https://github.com/jhonreimons/diangraha-backend.git
+              cd diangraha-backend
+              echo "✅ Repository cloned"
             fi
 
             echo "=== STAGE 3: Create .env file ==="
             cat << 'EOF' > .env
-  MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-  MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-  MYSQL_USER=${{ secrets.MYSQL_USER }}
-  MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-  
-  SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
-  SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
-  SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-  
-  AMAZON_ACCESS_KEY=${{ secrets.AMAZON_ACCESS_KEY }}
-  AMAZON_SECRET_KEY=${{ secrets.AMAZON_SECRET_KEY }}
-  AMAZON_BUCKET_NAME=${{ secrets.AMAZON_BUCKET_NAME }}
-  AMAZON_REGION=${{ secrets.AMAZON_REGION }}
-  EOF
-  
-  echo "✅ .env recreated successfully"
-  echo
-  echo "Debug .env content:"
-  cat .env
+            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            MYSQL_USER=${{ secrets.MYSQL_USER }}
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            
+            SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
+            SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
+            SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+            
+            AMAZON_ACCESS_KEY=${{ secrets.AMAZON_ACCESS_KEY }}
+            AMAZON_SECRET_KEY=${{ secrets.AMAZON_SECRET_KEY }}
+            AMAZON_BUCKET_NAME=${{ secrets.AMAZON_BUCKET_NAME }}
+            AMAZON_REGION=${{ secrets.AMAZON_REGION }}
+            EOF
+            echo "✅ .env created"
 
-echo "=== STAGE 4: Build Spring Boot ==="
-  rm -rf target || true
-  ./mvnw -q clean package -DskipTests
-  
-  if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
-  echo "❌ Build failed!"
-  exit 1
-  fi
-  
-  echo "✅ Build successful"
+          echo "=== STAGE 4: Stop previous container ==="
+            docker stop diangraha-backend || true
+            docker rm diangraha-backend || true
 
-echo "=== STAGE 5: Test Spring Boot JAR ==="
-  timeout 15s java -jar target/diangraha-backend-0.0.1-SNAPSHOT.jar \
-  --spring.profiles.active=test \
-  > /dev/null 2>&1 || true
-  
-  echo "✅ JAR test passed"
+          echo "=== STAGE 5: Build JAR ==="
+            rm -rf target || true
+            ./mvnw -q clean package -DskipTests
+            
+            if [ ! -f "target/diangraha-backend-0.0.1-SNAPSHOT.jar" ]; then
+          echo "❌ Build failed: JAR missing!"
+            exit 1
+            fi
+            echo "✅ Build success"
 
-echo "=== STAGE 6: Stop old container ==="
-  docker stop diangraha-backend || true
-  docker rm diangraha-backend || true
+          echo "=== STAGE 6: Quick springboot test ==="
+            timeout 15s java -jar target/diangraha-backend-0.0.1-SNAPSHOT.jar \
+            --spring.profiles.active=test > /dev/null 2>&1 || true
+            echo "✅ Spring Boot test passed"
 
-echo "=== STAGE 7: Build Docker image ==="
-  docker compose build --no-cache app
-  
-  echo "✅ Image built"
+          echo "=== STAGE 7: Build container ==="
+            docker compose build --no-cache app
+            echo "✅ Docker image built"
 
-echo "=== STAGE 8: Deploy container ==="
-  docker compose up -d app
+          echo "=== STAGE 8: Deploy container ==="
+            docker compose up -d app
+            echo "✅ Deployment started"
 
-echo "=== STAGE 9: Health Check ==="
-  sleep 10
-  
-  if curl -fs http://localhost:8080/api/brands > /dev/null; then
-  echo "🎉 Deployment Successful!"
-  else
-  echo "❌ Deployment failed — app not responding"
-  docker compose logs app --tail=100
-  exit 1
-  fi
+          echo "=== STAGE 9: Health check ==="
+            sleep 10
+            
+            if curl -fs http://localhost:8080/api/brands > /dev/null; then
+            echo "🎉 Deployment SUCCESS!"
+            else
+            echo "❌ App not responding"
+            docker compose logs app --tail=50
+            exit 1
+            fi
