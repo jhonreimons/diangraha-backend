@@ -17,58 +17,100 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-
+          # Pass secrets as environment variables to the remote script
+          envs: |
+            MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
+            MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
+            MYSQL_USER=${{ secrets.MYSQL_USER }}
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
+            SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
+            SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+            AMAZON_ACCESS_KEY=${{ secrets.AMAZON_ACCESS_KEY }}
+            AMAZON_SECRET_KEY=${{ secrets.AMAZON_SECRET_KEY }}
+            AMAZON_BUCKET_NAME=${{ secrets.AMAZON_BUCKET_NAME }}
+            AMAZON_REGION=${{ secrets.AMAZON_REGION }}
           script: |
-            set -e
+            set -e  # Exit on any error
 
             # === Configuration ===
             APP_DIR="$HOME/diangraha-backend"
 
-            echo ">>> Ensure application directory exists"
+            echo ">>> Checking prerequisites (Docker, Docker Compose, Git, Java)..."
+            if ! command -v docker &> /dev/null; then
+              echo "❌ Docker not found. Installing Docker..."
+              sudo apt-get update && sudo apt-get install -y docker.io
+            fi
+            if ! command -v docker compose &> /dev/null; then
+              echo "❌ Docker Compose not found. Installing Docker Compose..."
+              sudo apt-get update && sudo apt-get install -y docker-compose-plugin
+            fi
+            if ! command -v git &> /dev/null; then
+              echo "❌ Git not found. Installing Git..."
+              sudo apt-get update && sudo apt-get install -y git
+            fi
+            if ! command -v java &> /dev/null; then
+              echo "❌ Java not found. Installing OpenJDK..."
+              sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
+            fi
+            echo "✅ Prerequisites OK"
+
+            echo ">>> Ensuring application directory exists"
             mkdir -p "$APP_DIR"
 
             if [ ! -d "$APP_DIR/.git" ]; then
-              echo ">>> Fresh clone"
+              echo ">>> Fresh clone of repository"
               rm -rf "$APP_DIR"
               git clone https://github.com/jhonreimons/diangraha-backend.git "$APP_DIR"
             fi
 
-            echo ">>> Enter application folder"
+            echo ">>> Entering application folder"
             cd "$APP_DIR"
 
-            echo ">>> Pull latest version"
+            echo ">>> Pulling latest version from main branch"
             git checkout main
             git fetch origin main
             git reset --hard origin/main
+            echo "✅ Repository updated"
 
-            echo ">>> Generate .env file"
+            echo ">>> Generating .env file"
             cat <<EOF > .env
-  MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}
-  MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-  MYSQL_USER=${{ secrets.MYSQL_USER }}
-  MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-  
-  SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
-  SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
-  SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-  
-  AMAZON_ACCESS_KEY=${{ secrets.AMAZON_ACCESS_KEY }}
-  AMAZON_SECRET_KEY=${{ secrets.AMAZON_SECRET_KEY }}
-  AMAZON_BUCKET_NAME=${{ secrets.AMAZON_BUCKET_NAME }}
-  AMAZON_REGION=${{ secrets.AMAZON_REGION }}
-  EOF
-  echo "✅ .env created"
-  
-  echo ">>> Cleaning JAR build"
-  rm -rf target
-  
-  echo ">>> Build JAR using Maven Wrapper"
-  ./mvnw -q clean package -DskipTests
-  
-  echo ">>> Run docker compose"
-  docker compose up -d --build --remove-orphans
-  
-  echo ">>> Cleanup unused images"
-  docker image prune -f
-  
-  echo "✅ Deployment SUCCESSFUL!"
+            MYSQL_DATABASE=$MYSQL_DATABASE
+            MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+            MYSQL_USER=$MYSQL_USER
+            MYSQL_PASSWORD=$MYSQL_PASSWORD
+            SPRING_DATASOURCE_URL=$SPRING_DATASOURCE_URL
+            SPRING_DATASOURCE_USERNAME=$SPRING_DATASOURCE_USERNAME
+            SPRING_DATASOURCE_PASSWORD=$SPRING_DATASOURCE_PASSWORD
+            AMAZON_ACCESS_KEY=$AMAZON_ACCESS_KEY
+            AMAZON_SECRET_KEY=$AMAZON_SECRET_KEY
+            AMAZON_BUCKET_NAME=$AMAZON_BUCKET_NAME
+            AMAZON_REGION=$AMAZON_REGION
+            EOF
+            echo "✅ .env file created"
+
+            echo ">>> Cleaning previous JAR build"
+            rm -rf target
+
+            echo ">>> Building JAR using Maven"
+            if [ -f "./mvnw" ]; then
+              ./mvnw -q clean package -DskipTests
+            else
+              echo "Maven Wrapper not found, using system Maven..."
+              mvn -q clean package -DskipTests
+            fi
+
+            # Verify JAR was created
+            if [ ! -f "target/*.jar" ]; then
+              echo "❌ JAR build failed! No JAR file found in target/"
+              exit 1
+            fi
+            echo "✅ JAR build successful"
+
+            echo ">>> Running Docker Compose"
+            docker compose up -d --build --remove-orphans
+
+            echo ">>> Cleaning up unused Docker images"
+            docker image prune -f
+
+            echo "✅ Deployment SUCCESSFUL!"
