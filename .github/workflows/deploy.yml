@@ -53,9 +53,13 @@ jobs:
               echo "❌ Java not found. Please install Java on VPS manually."
               exit 1
             fi
-            if ! command -v mvn &> /dev/null && [ ! -f "./mvnw" ]; then
-              echo "❌ Maven not found and no Maven Wrapper. Please install Maven on VPS manually."
-              exit 1
+            if ! command -v mvn &> /dev/null; then
+              echo "Maven not found, installing Maven..."
+              sudo apt-get update && sudo apt-get install -y maven
+              if ! command -v mvn &> /dev/null; then
+                echo "❌ Failed to install Maven. Please install Maven on VPS manually."
+                exit 1
+              fi
             fi
             echo "✅ Prerequisites OK"
 
@@ -102,7 +106,11 @@ jobs:
             # Force clean build with cache clear
             rm -rf target/ || true
             rm -rf ~/.m2/repository/com/diangraha-backend || true
-            ./mvnw clean package -DskipTests -U
+            if [ -f "./mvnw" ]; then
+              ./mvnw clean package -DskipTests -U
+            else
+              mvn clean package -DskipTests -U
+            fi
             if ! ls target/diangraha-backend-0.0.1-SNAPSHOT.jar 1> /dev/null 2>&1; then
                 echo "❌ ERROR: JAR file not found!"
                 exit 1
