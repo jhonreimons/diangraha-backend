@@ -109,7 +109,8 @@ jobs:
             echo "✅ JAR build successful: $(ls -la target/*.jar)"
 
             echo "=== STAGE 5: Test JAR Application ==="
-            timeout 30s java -jar target/diangraha-backend-0.0.1-SNAPSHOT.jar --spring.profiles.active=test > jar-test.log 2>&1 &
+            # Removed --spring.profiles.active=test to use default profile and load .env
+            timeout 30s java -jar target/diangraha-backend-0.0.1-SNAPSHOT.jar > jar-test.log 2>&1 &
             JAR_PID=$!
             sleep 15
             if ps -p $JAR_PID > /dev/null; then
