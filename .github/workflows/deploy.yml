@@ -34,7 +34,7 @@ jobs:
           script: |
             set -e  # Exit on any error
 
-            echo ">>> Checking prerequisites (Docker, Docker Compose, Git, Java, Maven)..."
+            echo ">>> Checking prerequisites (Docker, Docker Compose, Git, Java)..."
             if ! command -v docker &> /dev/null; then
               echo "❌ Docker not found. Please install Docker on VPS manually."
               exit 1
@@ -49,10 +49,6 @@ jobs:
             fi
             if ! command -v java &> /dev/null; then
               echo "❌ Java not found. Please install Java on VPS manually."
-              exit 1
-            fi
-            if ! command -v mvn &> /dev/null && [ ! -f "./mvnw" ]; then
-              echo "❌ Maven not found and no Maven Wrapper. Please install Maven on VPS manually."
               exit 1
             fi
             echo "✅ Prerequisites OK"
@@ -73,6 +69,13 @@ jobs:
               cd diangraha-backend
               echo "✅ Fresh code cloned"
             fi
+
+            # Check for Maven Wrapper after entering project directory
+            if [ ! -f "./mvnw" ]; then
+              echo "❌ Maven Wrapper (./mvnw) not found in project. Please commit ./mvnw to the repository."
+              exit 1
+            fi
+            echo "✅ Maven Wrapper found"
 
             echo "=== STAGE 2: Create Environment Config ==="
             cat > .env <<EOL
@@ -98,11 +101,7 @@ jobs:
             echo "=== STAGE 4: Build JAR Application ==="
             rm -rf target/ || true
             rm -rf ~/.m2/repository/com/diangraha-backend || true
-            if [ -f "./mvnw" ]; then
-              ./mvnw clean package -DskipTests -U
-            else
-              mvn clean package -DskipTests -U
-            fi
+            ./mvnw clean package -DskipTests -U
             if ! ls target/diangraha-backend-0.0.1-SNAPSHOT.jar 1> /dev/null 2>&1; then
               echo "❌ ERROR: JAR file not found!"
               exit 1
